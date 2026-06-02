@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>家务管理</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- vConsole for debugging in Line Mini App (Remove or comment out in production) -->
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+        // Init vConsole
+        var vConsole = new window.VConsole();
+        console.log('vConsole initialized for debugging.');
+    </script>
+
+    <!-- LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+    <!-- Image Compression Library -->
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app-container">
+        <!-- Dynamic View Container -->
+        <main id="view-container">
+            <!-- Views will be injected here by app.js -->
+            <div class="loading-screen">
+                <div class="spinner"></div>
+                <p>正在加载应用...</p>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation Bar (Glassmorphism) -->
+        <nav id="bottom-nav" class="glass-nav">
+            <a href="#" class="nav-item active" data-target="home">
+                <span class="icon">🏠</span>
+                <span class="label">主页</span>
+            </a>
+            <a href="#" class="nav-item" data-target="family">
+                <span class="icon">👨‍👩‍👧‍👦</span>
+                <span class="label">家庭</span>
+            </a>
+            <a href="#" class="nav-item" data-target="chores">
+                <span class="icon">✨</span>
+                <span class="label">家务库</span>
+            </a>
+            <a href="#" class="nav-item" data-target="history">
+                <span class="icon">📅</span>
+                <span class="label">历史</span>
+            </a>
+            <a href="#" class="nav-item" data-target="profile">
+                <span class="icon">👤</span>
+                <span class="label">我的</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Application Logic (ES Module) -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

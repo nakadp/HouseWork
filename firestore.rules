@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 保护家庭数据：仅限成员读写
+    match /families/{familyId} {
+      // 允许读取和写入的条件：当前登录用户的 uid 存在于 members 数组中
+      // （如果您最终部署了云函数生成 Custom Token，这里的 uid 就会是 Line ID）
+      allow read, update, delete: if request.auth != null && request.auth.uid in resource.data.members;
+      
+      // 允许任何人创建新的家庭组（但创建后只有成员能访问）
+      allow create: if request.auth != null;
+      
+      // 保护子集合：历史打卡记录
+      match /records/{recordId} {
+         allow read, write: if request.auth != null && 
+            request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.members;
+      }
+      
+      // 保护子集合：家务模板库
+      match /chores_templates/{templateId} {
+         allow read, write: if request.auth != null && 
+            request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.members;
+      }
+    }
+  }
+}
