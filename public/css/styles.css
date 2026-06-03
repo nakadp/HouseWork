@@ -1,18 +1,15 @@
 /* =========================================
-   全局变量与主题设置
-========================================= */
+   Cyber Chores - 高阶暗黑毛玻璃风格
+======================================== */
 :root {
-    /* 亮色模式 (Light Theme) */
-    --bg-color: #f4f6f9;
-    --surface-color: rgba(255, 255, 255, 0.85);
-    --surface-solid: #ffffff;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --primary-color: #0ea5e9;
-    --primary-light: #e0f2fe;
-    --success-color: #10b981;
-    --danger-color: #ef4444;
-    --border-color: rgba(0, 0, 0, 0.05);
+    --bg-color: #09090b;
+    --surface-color: rgba(20, 20, 25, 0.6);
+    --surface-solid: #141419;
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --accent-color: #00ff66;
+    --accent-glow: 0 0 15px rgba(0, 255, 102, 0.4);
+    --border-color: rgba(255, 255, 255, 0.05);
     
     /* 间距与圆角 */
     --radius-sm: 8px;
@@ -21,34 +18,21 @@
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
-    
-    /* 阴影 */
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        /* 暗色模式 (Dark Theme) */
-        --bg-color: #0f172a;
-        --surface-color: rgba(30, 41, 59, 0.75);
-        --surface-solid: #1e293b;
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --border-color: rgba(255, 255, 255, 0.05);
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
+/* 强制覆盖亮色模式 */
+@media (prefers-color-scheme: light) {
+    /* 保持使用暗黑模式变量 */
 }
 
 /* =========================================
    基础重置
-========================================= */
+======================================== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -56,50 +40,61 @@ body {
     background-color: var(--bg-color);
     color: var(--text-primary);
     line-height: 1.5;
-    overflow: hidden; /* 防止整个页面滚动，仅在内部容器滚动 */
+    overflow: hidden;
 }
 
 /* =========================================
    布局与容器
-========================================= */
+======================================== */
 #app-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    height: 100dvh; /* 支持移动端动态视口 */
+    height: 100dvh;
     width: 100vw;
+    background: radial-gradient(circle at top right, rgba(0, 255, 102, 0.05), transparent 40%),
+                radial-gradient(circle at bottom left, rgba(0, 255, 102, 0.02), transparent 40%);
 }
 
 #view-container {
     flex: 1;
     overflow-y: auto;
     padding: var(--spacing-md);
-    padding-bottom: 90px; /* 为底部导航留出空间 */
+    padding-bottom: 110px; /* 为浮动底部导航留出空间 */
     position: relative;
-    scrollbar-width: none; /* Firefox 隐藏滚动条 */
+    scrollbar-width: none;
 }
 #view-container::-webkit-scrollbar {
-    display: none; /* Chrome/Safari 隐藏滚动条 */
+    display: none;
 }
 
 /* =========================================
-   组件：底部导航栏 (Glassmorphism)
-========================================= */
+   组件：悬浮底部导航栏 (Glassmorphism)
+======================================== */
 .glass-nav {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+    bottom: 20px;
+    left: 20px;
+    width: calc(100% - 40px);
     height: 70px;
     background: var(--surface-color);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border-color);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
     display: flex;
     justify-content: space-around;
     align-items: center;
     z-index: 1000;
-    padding-bottom: env(safe-area-inset-bottom); /* 适配刘海屏底部安全区 */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    padding-bottom: 0; /* 悬浮状态不再需要 safe-area 填充到本身内部 */
+}
+
+/* 适配底部安全区 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .glass-nav {
+        bottom: calc(20px + env(safe-area-inset-bottom));
+    }
 }
 
 .nav-item {
@@ -114,44 +109,85 @@ body {
 }
 
 .nav-item .icon {
-    font-size: 24px;
-    margin-bottom: 2px;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0.6;
+}
+.nav-item .icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .nav-item .label {
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .nav-item.active {
-    color: var(--primary-color);
+    color: var(--accent-color);
 }
 
 .nav-item.active .icon {
-    transform: translateY(-2px) scale(1.15);
+    transform: translateY(-4px) scale(1.15);
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(0,255,102,0.6));
+}
+.nav-item.active .label {
+    text-shadow: var(--accent-glow);
 }
 
 /* =========================================
-   组件：通用卡片 (Cards)
-========================================= */
+   组件：高阶毛玻璃卡片 (Glass Cards)
+======================================== */
 .card {
-    background: var(--surface-solid);
+    background: var(--surface-color);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
-    box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card:active {
     transform: scale(0.98);
 }
 
+/* 暗黑网格渐变占位符 */
+.mesh-gradient-box {
+    background: 
+        radial-gradient(circle at 0% 0%, rgba(255,255,255,0.03) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(0,255,102,0.05) 0%, transparent 50%),
+        #111114;
+    position: relative;
+    overflow: hidden;
+}
+.mesh-gradient-box::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
 /* =========================================
-   组件：按钮 (Buttons)
-========================================= */
+   组件：硬核按钮 (Neon Buttons)
+======================================== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -160,26 +196,27 @@ body {
     border-radius: var(--radius-lg);
     border: none;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
+    letter-spacing: 0.5px;
 }
 
 .btn-primary {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    background: var(--accent-color);
+    color: #000000;
+    box-shadow: var(--accent-glow);
 }
 
 .btn-primary:active {
-    transform: scale(0.95);
-    box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3);
+    transform: scale(0.92);
+    box-shadow: 0 0 5px rgba(0, 255, 102, 0.8);
 }
 
 /* =========================================
    实用工具类与动画
-========================================= */
+======================================== */
 .view-section {
     display: none;
     animation: fadeIn 0.4s ease forwards;
@@ -190,8 +227,8 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(15px); filter: blur(4px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 .loading-screen {
@@ -200,19 +237,41 @@ body {
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--text-secondary);
+    color: var(--accent-color);
+    text-shadow: var(--accent-glow);
 }
 
 .spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid var(--primary-light);
-    border-top-color: var(--primary-color);
+    border: 3px solid rgba(0,255,102,0.1);
+    border-top-color: var(--accent-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: var(--spacing-md);
+    box-shadow: 0 0 15px rgba(0,255,102,0.2);
 }
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* 发光圆点 */
+.neon-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.neon-dot.blue { background: #0ea5e9; box-shadow: 0 0 8px #0ea5e9; }
+.neon-dot.red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+.neon-dot.green { background: #00ff66; box-shadow: 0 0 8px #00ff66; }
+
+/* SVG Icon styles within cards */
+.icon-neon {
+    color: var(--accent-color);
+    filter: drop-shadow(0 0 8px rgba(0,255,102,0.6));
+}
+.icon-white {
+    color: #ffffff;
 }

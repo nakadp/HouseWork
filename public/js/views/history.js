@@ -4,52 +4,76 @@ export const HistoryView = {
             <div class="view-section active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                     <h2 style="font-size: 24px; font-weight: 700;">历史与统计</h2>
-                    <select style="padding: 4px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--surface-solid);">
-                        <option>本月</option>
-                        <option>上个月</option>
+                    <select style="padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--surface-solid); color: var(--accent-color); font-weight: 700; box-shadow: var(--accent-glow); outline: none;">
+                        <option>2026年6月</option>
+                        <option>2026年5月</option>
+                        <option>2026年4月</option>
+                        <option>2026年3月</option>
+                        <option>2026年2月</option>
+                        <option>2026年1月</option>
+                        <option>2025年12月</option>
                     </select>
                 </div>
-
-                <div class="card" style="padding: 0; overflow: hidden;">
-                    <!-- Simple Calendar Placeholder -->
-                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; font-weight: bold; padding: 12px 0; background: var(--surface-color); border-bottom: 1px solid var(--border-color);">
-                        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border-color);">
-                        <!-- Fake days -->
-                        <div style="background: var(--surface-solid); min-height: 60px; padding: 4px;"></div>
-                        <div style="background: var(--surface-solid); min-height: 60px; padding: 4px;">1</div>
-                        <div style="background: var(--surface-solid); min-height: 60px; padding: 4px;">2
-                            <div style="height: 4px; background: var(--primary-color); border-radius: 2px; margin-top: 4px;"></div>
-                        </div>
-                        <div style="background: var(--surface-solid); min-height: 60px; padding: 4px;">3</div>
-                        <div style="background: var(--surface-solid); min-height: 60px; padding: 4px;">4
-                            <div style="height: 4px; background: var(--success-color); border-radius: 2px; margin-top: 4px;"></div>
-                        </div>
-                        <div style="background: var(--surface-solid); min-height: 60px; padding: 4px; background: var(--primary-light); font-weight: bold;">5
-                            <div style="height: 4px; background: var(--danger-color); border-radius: 2px; margin-top: 4px;"></div>
-                            <div style="height: 4px; background: var(--primary-color); border-radius: 2px; margin-top: 2px;"></div>
-                        </div>
-                        <div style="background: var(--surface-solid); min-height: 60px; padding: 4px;">6</div>
-                    </div>
-                </div>
                 
-                <div style="display: flex; gap: 12px; margin-top: 16px; font-size: 12px; justify-content: center;">
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div style="width: 12px; height: 12px; background: var(--primary-color); border-radius: 2px;"></div> 爸爸
+                <!-- Tab Controls -->
+                <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 4px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+                    <button id="tab-calendar" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--surface-color); color: var(--accent-color); font-weight: 700; font-size: 14px; box-shadow: var(--accent-glow); cursor: pointer; transition: all 0.2s;">
+                        📅 日历
+                    </button>
+                    <button id="tab-stats" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: var(--text-secondary); font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+                        📊 统计
+                    </button>
+                </div>
+
+                <!-- Calendar View -->
+                <div id="view-calendar">
+                    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; font-weight: 700; padding: 16px 0; background: var(--surface-solid); border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                            <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                        </div>
+                        <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border-color);">
+                            <!-- Generated by JS -->
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div style="width: 12px; height: 12px; background: var(--danger-color); border-radius: 2px;"></div> 妈妈
+                    
+                    <div style="display: flex; gap: 16px; margin-top: 10px; margin-bottom: 24px; font-size: 12px; font-weight: 600; justify-content: center;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="neon-dot blue"></div> <span style="color: var(--text-secondary);">爸爸</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="neon-dot red"></div> <span style="color: var(--text-secondary);">妈妈</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="neon-dot green"></div> <span style="color: var(--text-secondary);">孩子</span>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <div style="width: 12px; height: 12px; background: var(--success-color); border-radius: 2px;"></div> 孩子
+
+                    <h3 style="margin-bottom: 16px; font-size: 18px; font-weight: 700;">今日详情</h3>
+                    <div class="card">
+                        <div style="display: flex; align-items: center; font-size: 14px; font-weight: 600; gap: 8px;">
+                            <div class="neon-dot blue" style="flex-shrink: 0;"></div> 爸爸 - 洗碗 <span style="color: var(--accent-color); margin-left: auto; font-size: 12px;">已完成 ✓</span>
+                        </div>
+                        <div style="height: 1px; background: var(--border-color); margin: 12px 0;"></div>
+                        <div style="display: flex; align-items: center; font-size: 14px; font-weight: 600; gap: 8px;">
+                            <div class="neon-dot red" style="flex-shrink: 0;"></div> 妈妈 - 擦桌子 <span style="color: var(--accent-color); margin-left: auto; font-size: 12px;">已完成 ✓</span>
+                        </div>
                     </div>
                 </div>
 
-                <h3 style="margin-top: 32px; margin-bottom: 16px; font-size: 18px;">6月5日 详情</h3>
-                <div class="card">
-                    <p style="font-size: 14px;">爸爸 - 洗碗 (已完成)</p>
-                    <p style="font-size: 14px; margin-top: 8px;">妈妈 - 擦桌子 (已完成)</p>
+                <!-- Stats View -->
+                <div id="view-stats" style="display: none;">
+                    <div class="card" style="margin-bottom: 20px;">
+                        <h3 style="font-size: 14px; font-weight: 700; color: var(--text-secondary); margin-bottom: 16px; text-align: center;">参与度趋势 (本月次数)</h3>
+                        <div style="position: relative; height: 220px; width: 100%;">
+                            <canvas id="chart-person"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size: 14px; font-weight: 700; color: var(--text-secondary); margin-bottom: 16px; text-align: center;">家务类型分布</h3>
+                        <div style="position: relative; height: 200px; width: 100%; display: flex; justify-content: center;">
+                            <canvas id="chart-type"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -57,5 +81,195 @@ export const HistoryView = {
 
     mount(container) {
         container.innerHTML = this.render();
+        
+        const tabCalendar = container.querySelector('#tab-calendar');
+        const tabStats = container.querySelector('#tab-stats');
+        const viewCalendar = container.querySelector('#view-calendar');
+        const viewStats = container.querySelector('#view-stats');
+        
+        let chartsInitialized = false;
+
+        // Tab Switching Logic
+        const switchTab = (tab) => {
+            if (tab === 'calendar') {
+                tabCalendar.style.background = 'var(--surface-color)';
+                tabCalendar.style.color = 'var(--accent-color)';
+                tabCalendar.style.boxShadow = 'var(--accent-glow)';
+                
+                tabStats.style.background = 'transparent';
+                tabStats.style.color = 'var(--text-secondary)';
+                tabStats.style.boxShadow = 'none';
+                
+                viewCalendar.style.display = 'block';
+                viewStats.style.display = 'none';
+            } else {
+                tabStats.style.background = 'var(--surface-color)';
+                tabStats.style.color = 'var(--accent-color)';
+                tabStats.style.boxShadow = 'var(--accent-glow)';
+                
+                tabCalendar.style.background = 'transparent';
+                tabCalendar.style.color = 'var(--text-secondary)';
+                tabCalendar.style.boxShadow = 'none';
+                
+                viewCalendar.style.display = 'none';
+                viewStats.style.display = 'block';
+                
+                if (!chartsInitialized) {
+                    // Small delay to ensure display: block has taken effect for canvas to measure sizing
+                    setTimeout(() => this.initCharts(container), 10);
+                    chartsInitialized = true;
+                }
+            }
+        };
+
+        tabCalendar.addEventListener('click', () => switchTab('calendar'));
+        tabStats.addEventListener('click', () => switchTab('stats'));
+
+        this.generateCalendar(container);
+    },
+
+    generateCalendar(container) {
+        const grid = container.querySelector('#calendar-grid');
+        let html = '';
+        
+        // 简单生成42个格子 (6周，完全覆盖一个月)
+        for (let i = 0; i < 42; i++) {
+            let dayNum = i - 2; // 假装前面有3天空白
+            if (dayNum <= 0 || dayNum > 30) {
+                html += `<div style="background: var(--surface-color); min-height: 50px; padding: 4px; font-weight: 600; text-align: center; color: var(--text-secondary); opacity: 0.3;">${dayNum <= 0 ? 31 + dayNum : dayNum - 30}</div>`;
+            } else {
+                let dotsHtml = '';
+                // 随便添加一些随机完成记录点作为 mock 数据
+                if (dayNum % 3 === 0) {
+                    dotsHtml = `<div class="neon-dot blue"></div>`;
+                } else if (dayNum % 5 === 0) {
+                    dotsHtml = `<div class="neon-dot green"></div>`;
+                } else if (dayNum % 2 === 0 && dayNum < 15) {
+                    dotsHtml = `<div class="neon-dot red"></div><div class="neon-dot blue"></div>`;
+                }
+                
+                let todayStyle = '';
+                if (dayNum === 15) {
+                    todayStyle = 'background: rgba(0,255,102,0.1); border: 1px solid var(--accent-color); color: var(--accent-color); text-shadow: var(--accent-glow);';
+                } else {
+                    todayStyle = 'background: var(--surface-color); color: var(--text-primary);';
+                }
+
+                html += `
+                    <div style="${todayStyle} min-height: 50px; padding: 4px; font-weight: 600; text-align: center; position: relative;">
+                        ${dayNum}
+                        <div style="display: flex; justify-content: center; gap: 4px; margin-top: 4px; flex-wrap: wrap;">
+                            ${dotsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        grid.innerHTML = html;
+    },
+
+    initCharts(container) {
+        if (!window.Chart) {
+            console.error('Chart.js 尚未加载完成！');
+            return;
+        }
+
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        // Line Chart (Person vs Time/Count)
+        const ctxPerson = container.querySelector('#chart-person').getContext('2d');
+        new Chart(ctxPerson, {
+            type: 'line',
+            data: {
+                labels: ['第一周', '第二周', '第三周', '第四周'],
+                datasets: [
+                    {
+                        label: '爸爸',
+                        data: [5, 8, 4, 10],
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0ea5e9',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#0ea5e9',
+                        pointRadius: 4,
+                        fill: true
+                    },
+                    {
+                        label: '妈妈',
+                        data: [7, 6, 9, 8],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ef4444',
+                        pointRadius: 4
+                    },
+                    {
+                        label: '孩子',
+                        data: [2, 3, 2, 4],
+                        borderColor: '#00ff66',
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointBackgroundColor: '#00ff66',
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, boxWidth: 6 }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { 
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        beginAtZero: true,
+                        ticks: { stepSize: 2 }
+                    }
+                }
+            }
+        });
+
+        // Doughnut Chart (Chore Type)
+        const ctxType = container.querySelector('#chart-type').getContext('2d');
+        new Chart(ctxType, {
+            type: 'doughnut',
+            data: {
+                labels: ['洗碗', '扫拖地', '洗衣', '整理', '其他'],
+                datasets: [{
+                    data: [30, 25, 20, 15, 10],
+                    backgroundColor: [
+                        '#00ff66', // Accent Neon Green
+                        '#0ea5e9', // Blue
+                        '#ef4444', // Red
+                        '#f59e0b', // Yellow
+                        '#64748b'  // Slate
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { usePointStyle: true, boxWidth: 6, padding: 15 }
+                    }
+                }
+            }
+        });
     }
 };
