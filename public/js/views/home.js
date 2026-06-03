@@ -1,4 +1,6 @@
-import { store } from '../store.js?v=13';
+import { store } from '../store.js?v=17';
+import { uploadPhoto, compressImage } from '../services/firebase.js?v=17';
+import { getUserProfile } from '../services/liff.js?v=17';
 
 export const HomeView = {
     render() {
@@ -119,18 +121,31 @@ export const HomeView = {
         this.dom.photoUploadInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file && this.pendingUploadChoreId) {
-                // mock upload
-                console.log(`Ready to upload for task ${this.pendingUploadChoreId}: ${file.name}`);
-                setTimeout(() => {
+                const chore = store.todayChores.find(c => c.id === this.pendingUploadChoreId);
+                if (!chore) return;
+                
+                try {
+                    // Start loading state
+                    const btn = document.querySelector(`.btn-complete[data-id="${this.pendingUploadChoreId}"]`);
+                    if (btn) btn.textContent = '上传中...';
+                    
+                    const profile = await getUserProfile();
+                    const familyId = localStorage.getItem('user_family_id') || 'family_abc123';
+                    
+                    const compressedFile = await compressImage(file);
+                    const path = `families/${familyId}/photos/${Date.now()}_${compressedFile.name}`;
+                    const photoUrl = await uploadPhoto(compressedFile, path);
+                    
                     alert('照片上传成功！');
-                    const chore = store.todayChores.find(c => c.id === this.pendingUploadChoreId);
-                    if (chore) {
-                        chore.isCompleted = true;
-                        store.addSharedMockRecord(chore, 'mock_user_1', true);
-                        this.renderChores();
-                    }
+                    chore.isCompleted = true;
+                    await store.addSharedMockRecord(chore, profile.userId, true, photoUrl, profile);
+                    this.renderChores();
+                } catch (error) {
+                    console.error("Photo upload failed:", error);
+                    alert("照片上传失败：" + error.message);
+                } finally {
                     this.pendingUploadChoreId = null;
-                }, 800);
+                }
             }
         });
 
@@ -197,7 +212,9 @@ export const HomeView = {
                     const chore = store.todayChores.find(c => c.id === id);
                     if (chore) {
                         chore.isCompleted = true;
-                        store.addSharedMockRecord(chore, 'mock_user_1', false);
+                        getUserProfile().then(profile => {
+                            store.addSharedMockRecord(chore, profile.userId, false, null, profile);
+                        });
                         this.renderChores();
                     }
                 }

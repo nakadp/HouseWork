@@ -1,5 +1,6 @@
-import { getDb } from '../services/firebase.js?v=13';
-import { store } from '../store.js?v=13';
+import { getDb } from '../services/firebase.js?v=17';
+import { store } from '../store.js?v=17';
+import { getUserProfile } from '../services/liff.js?v=17';
 
 let firestoreModule = null;
 let currentUserId = 'mock_user_1'; 
@@ -139,6 +140,10 @@ export const FamilyView = {
 
         this.state.timeUpdaterInterval = setInterval(() => this.updateRelativeTimes(), 60000);
 
+        getUserProfile().then(profile => {
+            currentUserId = profile.userId;
+        });
+
         await this.initFeed();
     },
 
@@ -159,46 +164,18 @@ export const FamilyView = {
     },
 
     async initFeed() {
-        try {
-            const db = getDb();
-            if (!db) throw new Error("No DB");
-            
-            if (!firestoreModule) {
-                firestoreModule = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-            }
-            const { collection, query, orderBy, limit, onSnapshot } = firestoreModule;
-
-            const q = query(
-                collection(db, "families/demo-family/records"),
-                orderBy("completed_at", "desc"),
-                limit(20)
-            );
-
-            this.state.unsubscribeFeed = onSnapshot(q, (snapshot) => {
-                this.state.feed = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                this.state.feed.forEach(r => {
-                    if (r.completed_at && r.completed_at.toDate) r.completed_at = r.completed_at.toDate();
-                });
-                this.renderFeed();
-            }, (error) => {
-                console.warn("Firestore Feed snapshot error, fallback to mock.", error);
-                this.fallbackToMock();
-            });
-
-        } catch(e) {
-            console.log("Using Mock Feed generator");
-            this.fallbackToMock();
-        }
-    },
-
-    fallbackToMock() {
-        if (this.state.feed.length === 0) {
-            this.state.feed = store.getSharedMockRecords();
+        const familyId = localStorage.getItem('user_family_id') || 'family_abc123';
+        
+        // Listen to Active Supplies
+        store.listenToActiveSupplies(familyId, (supplies) => {
             this.renderFeed();
-        } else {
-            // Already populated, just render it
+        });
+
+        // Listen to Records
+        this.state.unsubscribeFeed = store.listenToRecords(familyId, (records) => {
+            this.state.feed = records;
             this.renderFeed();
-        }
+        });
     },
 
     renderFeed() {
@@ -307,13 +284,10 @@ export const FamilyView = {
                 if (!record.likes) record.likes = [];
 
                 if (hasLiked) {
-                    record.likes = record.likes.filter(uid => uid !== currentUserId);
+                    store.setLike(id, currentUserId, false);
                 } else {
-                    record.likes.push(currentUserId);
+                    store.setLike(id, currentUserId, true);
                 }
-                
-                this.renderFeed(); 
-                console.log(`Mock Firestore array${hasLiked ? 'Remove' : 'Union'} executed.`);
             });
         });
 

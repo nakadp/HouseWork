@@ -1,12 +1,13 @@
-import { initLIFF } from './services/liff.js?v=13';
-import { initFirebase } from './services/firebase.js?v=13';
+import { initLIFF, getUserProfile } from './services/liff.js?v=17';
+import { initFirebase, signInWithLineCustomToken, getDb } from './services/firebase.js?v=17';
+import { doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Import Views
-import { HomeView } from './views/home.js?v=13';
-import { FamilyView } from './views/family.js?v=13';
-import { ChoresView } from './views/chores.js?v=13';
-import { HistoryView } from './views/history.js?v=13';
-import { ProfileView } from './views/profile.js?v=13';
+import { HomeView } from './views/home.js?v=17';
+import { FamilyView } from './views/family.js?v=17';
+import { ChoresView } from './views/chores.js?v=17';
+import { HistoryView } from './views/history.js?v=17';
+import { ProfileView } from './views/profile.js?v=17';
 
 class App {
     constructor() {
@@ -31,10 +32,22 @@ class App {
         
         try {
             // Initialize LIFF and Firebase concurrently for speed
-            await Promise.all([
+            const [liffInit, firebaseInit] = await Promise.all([
                 initLIFF(),
                 initFirebase()
             ]);
+            
+            // Get LINE UID and Login to Firebase using Custom Token
+            const profile = await getUserProfile();
+            const lineUserId = profile.userId;
+            
+            if (lineUserId && firebaseInit) {
+                try {
+                    await signInWithLineCustomToken(lineUserId);
+                } catch (e) {
+                    console.error("Custom token login failed, falling back to mock UI", e);
+                }
+            }
             
             // Wait for URL params to handle incoming invites
             const urlParams = new URLSearchParams(window.location.search);
@@ -63,9 +76,16 @@ class App {
                 document.getElementById('btn-accept-join').addEventListener('click', async () => {
                     document.getElementById('btn-accept-join').textContent = '正在加入...';
                     try {
-                        // Mock Firestore arrayUnion fallback
+                        const db = getDb();
+                        if (db && lineUserId) {
+                            const familyRef = doc(db, 'families', invitedFamilyId);
+                            await updateDoc(familyRef, {
+                                members: arrayUnion(lineUserId)
+                            });
+                        }
+                        
                         localStorage.setItem('user_family_id', invitedFamilyId);
-                        console.log("Mock Firestore arrayUnion successful.");
+                        console.log("Firestore arrayUnion successful.");
                         
                         const successHtml = `<div style="color: var(--accent-color); font-size: 18px; font-weight: bold; margin-top: 16px;">✓ 加入成功！</div>`;
                         document.getElementById('btn-accept-join').outerHTML = successHtml;

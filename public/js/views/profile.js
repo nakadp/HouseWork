@@ -1,5 +1,5 @@
-import { getUserProfile, shareFamilyInvite } from '../services/liff.js?v=13';
-import { store } from '../store.js?v=13';
+import { getUserProfile, shareFamilyInvite } from '../services/liff.js?v=17';
+import { store } from '../store.js?v=17';
 
 // Gamification logic
 function getBadge(choresCount) {

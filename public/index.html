@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>家务管理</title>
 
     <!-- Google Fonts: Inter -->
@@ -13,12 +16,18 @@
     <!-- CSS -->
     <link rel="stylesheet" href="css/styles.css">
 
-    <!-- vConsole for debugging in Line Mini App (Remove or comment out in production) -->
+    <!-- vConsole for debugging in Line Mini App -->
     <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
     <script>
-        // Init vConsole
-        var vConsole = new window.VConsole();
-        console.log('vConsole initialized for debugging.');
+        // 🔍 智能判断：只有本地测试，或者链接里带有 ?debug=1 时才启用调试绿按钮
+        if (
+            window.location.hostname === "localhost" || 
+            window.location.hostname === "127.0.0.1" || 
+            window.location.search.includes("debug=1")
+        ) {
+            window.vConsole = new window.VConsole();
+            console.log('vConsole initialized for debugging.');
+        }
     </script>
 
     <!-- LIFF SDK -->
@@ -68,6 +77,6 @@
     </div>
 
     <!-- Main Application Logic (ES Module) -->
-    <script type="module" src="js/app.js?v=13"></script>
+    <script type="module" src="js/app.js?v=17"></script>
 </body>
 </html>

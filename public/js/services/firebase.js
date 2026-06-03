@@ -1,9 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
-let app, db, storage, auth;
+let app, db, storage, auth, functions;
 
 export async function initFirebase() {
     try {
@@ -18,16 +19,10 @@ export async function initFirebase() {
         db = getFirestore(app);
         storage = getStorage(app);
         auth = getAuth(app);
-        
-        // Sign in anonymously for easy dev setup
-        try {
-            await signInAnonymously(auth);
-        } catch (authError) {
-            console.warn("Firebase Anonymous Auth failed, continuing without auth:", authError);
-        }
+        functions = getFunctions(app, "asia-northeast1");
         
         console.log("Firebase initialized (Modular SDK v10)");
-        return { app, db, storage, auth };
+        return { app, db, storage, auth, functions };
     } catch (e) {
         console.error("Firebase init error (if running locally without emulator/hosting, this will fail):", e);
         // Do not throw so app can mount views using Mock
@@ -38,6 +33,26 @@ export async function initFirebase() {
 export function getDb() { return db; }
 export function getStorageInstance() { return storage; }
 export function getAuthInstance() { return auth; }
+export function getFunctionsInstance() { return functions; }
+
+/**
+ * Perform Custom Token login using LINE userId
+ */
+export async function signInWithLineCustomToken(lineUserId) {
+    if (!auth || !functions) throw new Error("Firebase not initialized");
+    try {
+        const createFirebaseToken = httpsCallable(functions, 'createFirebaseToken');
+        const result = await createFirebaseToken({ lineUserId });
+        const token = result.data.token;
+        
+        const userCredential = await signInWithCustomToken(auth, token);
+        console.log("Successfully signed in with custom token for UID:", userCredential.user.uid);
+        return userCredential.user;
+    } catch (e) {
+        console.error("Failed to sign in with LINE Custom Token:", e);
+        throw e;
+    }
+}
 
 /**
  * Compress image before uploading to save Firebase Storage quota

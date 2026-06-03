@@ -1,5 +1,5 @@
-import { getDb } from '../services/firebase.js?v=13';
-import { store } from '../store.js?v=13';
+import { getDb } from '../services/firebase.js?v=17';
+import { store } from '../store.js?v=17';
 
 let firestoreModule = null;
 
@@ -184,8 +184,9 @@ export const HistoryView = {
             const startOfMonth = new Date(this.state.currentYear, this.state.currentMonth - 1, 1);
             const endOfMonth = new Date(this.state.currentYear, this.state.currentMonth, 0, 23, 59, 59);
 
+            const familyId = localStorage.getItem('user_family_id') || 'family_abc123';
             const q = query(
-                collection(db, `families/demo-family/records`),
+                collection(db, `families/${familyId}/records`),
                 where("completed_at", ">=", startOfMonth),
                 where("completed_at", "<=", endOfMonth)
             );

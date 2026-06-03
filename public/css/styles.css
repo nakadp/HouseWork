@@ -35,10 +35,15 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html, body {
+    background-color: #09090b !important;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overscroll-behavior: none;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-primary);
     line-height: 1.5;
     overflow: hidden;
 }
@@ -49,9 +54,15 @@ body {
 #app-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
     height: 100dvh;
     width: 100vw;
+    min-height: 100vh;
+    max-width: 600px; /* PC端居中限宽 */
+    margin: 0 auto;
+    position: relative;
+    background-color: #09090b;
+    box-sizing: border-box;
+    padding-bottom: env(safe-area-inset-bottom);
     background: radial-gradient(circle at top right, rgba(0, 255, 102, 0.05), transparent 40%),
                 radial-gradient(circle at bottom left, rgba(0, 255, 102, 0.02), transparent 40%);
 }

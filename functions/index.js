@@ -8,6 +8,33 @@ admin.initializeApp();
 // 优化1：设置全局选项
 setGlobalOptions({ maxInstances: 10, region: "asia-northeast1" });
 
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+
+// ==========================================
+// 1. Auth Custom Token 颁发机制
+// ==========================================
+exports.createFirebaseToken = onCall({ region: "asia-northeast1" }, async (request) => {
+    // 允许传入 lineUserId。在生产环境中，这应该伴随着更严格的 LINE Token 校验
+    const lineUserId = request.data.lineUserId;
+    if (!lineUserId || typeof lineUserId !== "string") {
+        throw new HttpsError('invalid-argument', 'The function must be called with one argument "lineUserId"');
+    }
+
+    try {
+        // 创建 Firebase 自定义令牌，使用 LINE 的 userId 作为 UID
+        const customToken = await admin.auth().createCustomToken(lineUserId);
+        logger.info(`Successfully created custom token for LINE UID: ${lineUserId}`);
+        return { token: customToken };
+    } catch (error) {
+        logger.error("Error creating custom token:", error);
+        throw new HttpsError('internal', 'Unable to create custom token');
+    }
+});
+
+// ==========================================
+// 2. LINE Push Notifications
+// ==========================================
+
 // 监听数据库路径：当 families/{familyId}/records/ 下有新的家务打卡记录创建时触发
 exports.sendLineNotification = onDocumentCreated({
     document: "families/{familyId}/records/{recordId}",
