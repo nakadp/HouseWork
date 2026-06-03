@@ -258,3 +258,138 @@
         因为没有后端，千万不要在控制台把 Firebase 权限设置为对所有人读写（allow read, write: if true;）。您只需要写一行简单的规则：只允许用户的 Line ID 存在于 members 数组中时，才能读写该家庭的数据。
 
 采用这套方案，您甚至不需要购买服务器，只需懂前端（HTML/CSS/JS 或 Vue/React）配合 Line LIFF SDK 就可以把整个产品的核心逻辑跑通。
+
+
+
+
+
+
+
+
+
+
+---
+
+# 📅 「历史与统计」模块深度详细化开发规约
+
+## 一、 页面交互与视觉体验细化
+
+### 1. 顶部 Tab 切换控制 (日历 vs. 统计)
+
+* **交互逻辑**：两个 Tab 按钮采用互斥激活态。点击「日历」时，统计图表容器隐藏，日历与详情列表显示；点击「统计」时反之。切换时伴随 `opacity` 渐变与轻微的位移动画（0.2秒平滑过渡）。
+* **右上角筛选器**：目前 Mock 仅显示“2026年6月”。需要扩展为**多维联动筛选**：点击月份右侧展开下拉菜单，可并行选择「家庭成员（全部/爸爸/妈妈/孩子）」和「家务区域（全部/客厅/厨房...）」。日历圆点和下方列表将实时计算过滤。
+
+### 2. 日历视图与状态高亮
+
+* **日期标记点**：一个日期格子最多允许并排显示 3 个成员圆点（蓝色、红色、绿色）。如果当天只有爸爸做了家务，仅显示蓝点；若多人共同劳作，圆点自动居中并排。
+* **选中态 (Active State)**：如 Mock 所示，当前选中的日期（如15日）外圈带有荧光绿的 1px 边框，内部数字保持高亮。
+
+### 3. 今日详情列表（核心补全：引入头像与照片）
+
+目前 Mock 只有纯文字，需要升级为符合产品设计的**多媒体卡片布局**：
+
+* **头像整合**：每一条家务记录左侧，展示该成员的 LINE 头像缩略圆圈，替代现在的纯色小圆点。
+* **拍照截图凭证（LightBox 效果）**：
+* 如果该条记录包含图片 URL，在文本下方展示一张 `80px * 80px` 的正方形照片缩略图（带 8px 圆角与毛玻璃边框）。
+* **交互**：点击缩略图，触发 **LightBox（灯箱组件）**，全屏弹出高清大图，背景全黑半透明模糊（`backdrop-filter: blur(10px)`），点击大图任意位置可关闭。
+
+
+
+---
+
+## 二、 统计图表配置规范 (基于轻量级 Chart.js)
+
+为了在原生 JS 环境下完美渲染 Mock 中的图表，建议让 Agent 引入轻量级 `Chart.js`，通过配置全局样式使其适配暗黑霓虹风：
+
+### 1. 参与度趋势（折线图）
+
+* **曲线类型**：设置 `cubicInterpolationMode: 'monotone'` 或者是 `tension: 0.4`，使折线变成Mock中平滑的**贝塞尔曲线**。
+* **发光特效**：
+```javascript
+borderColor: '#00ff66', // 以孩子绿色线为例
+pointBackgroundColor: '#ffffff',
+pointBorderWidth: 2,
+// 关键：利用 Canvas 原生阴影做出霓虹发光
+shadowColor: 'rgba(0, 255, 102, 0.5)',
+shadowBlur: 10
+
+```
+
+
+* **网格线**：坐标轴网格线颜色设为暗灰（`rgba(255, 255, 255, 0.05)`），隐入背景。
+
+### 2. 家务类型分布（环形图）
+
+* **空心率**：设置 `cutout: '70%'` 形成高档的细环。
+* **边框消除**：设置 `borderWidth: 0`，防止卡片块之间出现生硬的白色割裂线。
+
+---
+
+## 三、 Firebase Firestore 极速查询与性能优化
+
+由于系统切换到了 Blaze 计费计划，虽然有免费额度，但为了防止日历高频切换导致读取次数暴增，必须引入**月度数据缓存与本地过滤机制**。
+
+### 1. 极简按月拉取策略 (Monthly Bulk Query)
+
+前端**绝对不能**点击哪一天就去数据库查哪一天。当用户切换到“2026年6月”时，前端一次性监听该月份的整月数据：
+
+```javascript
+// 伪代码示例：计算当月的起始与结束时间戳
+const startOfMonth = new Date(2026, 5, 1); // 6月1日
+const endOfMonth = new Date(2026, 6, 0, 23, 59, 59); // 6月30日
+
+const monthlyQuery = query(
+    collection(db, `families/${familyId}/records`),
+    where("completed_at", ">=", startOfMonth),
+    where("completed_at", "<=", endOfMonth),
+    orderBy("completed_at", "desc")
+);
+
+// 使用 onSnapshot 建立实时监听
+onSnapshot(monthlyQuery, (snapshot) => {
+    // 1. 将整月数据存入本地数组本地内存中 (window.currentMonthRecords)
+    window.currentMonthRecords = snapshot.docs.map(doc => doc.data());
+    
+    // 2. 触发日历圆点渲染逻辑（全量扫描 30 天，计算哪些日期该点什么颜色的点）
+    renderCalendarDots();
+    
+    // 3. 触发当前选中日期的详情渲染
+    renderDayDetails(window.currentlySelectedDay);
+    
+    // 4. 触发图表重新绘制
+    renderCharts();
+});
+
+```
+
+### 2. 本地内存过滤 (Zero-Read Filtering)
+
+当用户更改右上角的筛选条件（如只看“妈妈”的家务）时：
+
+* **操作**：前端直接对 `window.currentMonthRecords` 数组进行普通的 JavaScript `.filter()` 操作。
+* **收益**：**不产生任何新的 Firestore 读取次数**，响应速度达到 0 毫秒，且完全免费。
+
+---
+
+## 🤖 给 AI Agent 的精细化开发指令
+
+请将以下指令复制给您的 Agent，让它直接基于 Mock 图和这套规范生成 `history.js` 的完整生产级代码：
+
+```text
+请针对【历史与统计】模块（history.js）进行全功能实现。现在的黑绿暗黑系 UI 非常完美，请在其基础上注入以下业务逻辑与数据流转代码：
+
+1. 【数据读取与缓存机制】：
+   - 当初始化或切换月份下拉菜单（如 2026年6月）时，使用 Firestore v10+ 的 query, where, onSnapshot 实时监听当前整月的数据（families/{familyId}/records）。
+   - 将整月数据缓存至内存中，后续用户在日历上切换日期、或者利用右上角筛选器过滤“成员”或“区域”时，一律在前端进行纯 JS 过滤，严禁重复请求 Firestore 数据库。
+
+2. 【日历圆点与详情渲染】：
+   - 日历网络渲染时，根据当月数据，在对应日期数字下方并行渲染对应的家庭成员发光圆点标记（爸爸-蓝，妈妈-红，孩子-绿）。
+   - 点击具体某一天，下方“今日详情”列表滑出渲染。
+   - 升级“今日详情”列表样式：左侧引入展示该成员的真实 LINE 头像（profile.pictureUrl）；如果数据中包含 photo_url，在下方渲染一张 80x80px 的精美图片缩略图。点击缩略图激活高档毛玻璃背景的 LightBox 灯箱效果，全屏放大查看。
+
+3. 【图表满血绘制】：
+   - 引入 Chart.js，在「统计」Tab 内渲染“参与度趋势”折线图和“家务类型分布”环形图。
+   - 严格遵循 Mock 视觉：折线采用平滑贝塞尔曲线，线条带有符合成员颜色的 Neon Glow 发光阴影，网格线颜色设为 rgba(255,255,255,0.05)。
+
+请立即为我编写完整的 history.js 业务组件逻辑代码！
+

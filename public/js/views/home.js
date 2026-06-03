@@ -97,6 +97,25 @@ export const HomeView = {
         this.dom.btnAddTemplate.addEventListener('click', () => this.openAddTemplateModal());
         this.dom.hmBtnCancel.addEventListener('click', () => this.hideModal());
         
+        this.dom.hmLibraryList.addEventListener('change', (e) => {
+            if (e.target.classList.contains('lib-checkbox')) {
+                const label = e.target.closest('.lib-label-btn');
+                if (e.target.checked) {
+                    label.style.background = 'rgba(0,255,102,0.1)';
+                    label.style.border = '1px solid var(--accent-color)';
+                    label.style.color = 'var(--accent-color)';
+                    label.style.textShadow = 'var(--accent-glow)';
+                    label.style.boxShadow = 'inset 0 0 10px rgba(0,255,102,0.1)';
+                } else {
+                    label.style.background = 'rgba(255,255,255,0.05)';
+                    label.style.border = '1px solid transparent';
+                    label.style.color = 'var(--text-primary)';
+                    label.style.textShadow = 'none';
+                    label.style.boxShadow = 'none';
+                }
+            }
+        });
+        
         this.dom.photoUploadInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file && this.pendingUploadChoreId) {
@@ -266,10 +285,16 @@ export const HomeView = {
             html += `<div style="margin-bottom: 12px;"><h4 style="font-size: 14px; color: var(--accent-color); margin-bottom: 8px;">${cat}</h4>`;
             html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">`;
             chores.forEach(c => {
-                const checked = selectedBaseIds.includes(c.id) ? 'checked' : '';
+                const isSelected = selectedBaseIds.includes(c.id);
+                const checkedAttr = isSelected ? 'checked' : '';
+                const baseStyle = 'display: flex; align-items: center; justify-content: center; padding: 12px 8px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center;';
+                const activeStyle = 'background: rgba(0,255,102,0.1); border: 1px solid var(--accent-color); color: var(--accent-color); text-shadow: var(--accent-glow); box-shadow: inset 0 0 10px rgba(0,255,102,0.1);';
+                const inactiveStyle = 'background: rgba(255,255,255,0.05); border: 1px solid transparent; color: var(--text-primary);';
+                const currentStyle = isSelected ? `${baseStyle} ${activeStyle}` : `${baseStyle} ${inactiveStyle}`;
+                
                 html += `
-                    <label style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 14px; cursor: pointer; background: rgba(255,255,255,0.05); padding: 8px; border-radius: var(--radius-sm);">
-                        <input type="checkbox" class="lib-checkbox" value="${c.id}" ${checked} style="width: 16px; height: 16px; accent-color: var(--accent-color);">
+                    <label class="lib-label-btn" style="${currentStyle}">
+                        <input type="checkbox" class="lib-checkbox" value="${c.id}" ${checkedAttr} style="display: none;">
                         ${c.name}
                     </label>
                 `;
@@ -280,7 +305,7 @@ export const HomeView = {
     },
 
     openAddPlanModal() {
-        this.dom.hmTitle.textContent = '从家务库中选取添加到今日';
+        this.dom.hmTitle.textContent = '选择要添加的计划';
         this.dom.modal.style.display = 'flex';
         this.dom.hmInputGroup.style.display = 'none';
         this.dom.hmActionGroup.style.display = 'none';
