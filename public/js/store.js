@@ -63,7 +63,8 @@ export const store = {
         let recordIdCounter = 1;
         
         for (let i = 1; i <= daysInMonth; i++) {
-            if (Math.random() > 0.3) {
+            // Only generate mock data for PAST days, leave today empty for actual testing
+            if (i < now.getDate() && Math.random() > 0.3) {
                 let numChores = Math.floor(Math.random() * 3) + 1;
                 for (let j = 0; j < numChores; j++) {
                     const member = members[Math.floor(Math.random() * members.length)];
@@ -94,5 +95,41 @@ export const store = {
         data.sort((a, b) => b.completed_at - a.completed_at);
         this._sharedMockRecords = data;
         return data;
+    },
+
+    // Method to simulate adding a new record globally
+    addSharedMockRecord(chore, memberId = 'mock_user_1', hasPhoto = false) {
+        if (!this._sharedMockRecords) {
+            this.getSharedMockRecords(); // initialize if empty
+        }
+
+        const members = {
+            'mock_user_1': { name: '爸爸', color: 'blue', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=0ea5e9' },
+            'mock_user_2': { name: '妈妈', color: 'red', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=ef4444' },
+            'mock_user_3': { name: '孩子', color: 'green', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=00ff66' }
+        };
+        const member = members[memberId] || members['mock_user_1'];
+
+        const newRecord = {
+            id: `mock_rec_new_${Date.now()}`,
+            completed_at: new Date(),
+            memberId: memberId,
+            completed_by: memberId,
+            memberName: member.name,
+            completed_by_name: member.name,
+            color: member.color,
+            avatar: member.avatar,
+            completed_by_avatar: member.avatar,
+            choreName: chore.name,
+            chore_title: chore.name,
+            area: chore.category,
+            photo_url: hasPhoto ? 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=400&q=80' : null,
+            likes: [],
+            comments_count: 0
+        };
+
+        // Add to top of the feed
+        this._sharedMockRecords.unshift(newRecord);
+        return newRecord;
     }
 };

@@ -1,4 +1,4 @@
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
@@ -82,5 +82,111 @@ exports.sendLineNotification = onDocumentCreated({
         }
     } catch (error) {
         logger.error("网络请求发生错误:", error);
+    }
+});
+
+// 监听数据库路径：当家务记录更新时（主要监听点赞数变化）
+exports.sendLikeNotification = onDocumentUpdated({
+    document: "families/{familyId}/records/{recordId}",
+    secrets: ["LINE_CHANNEL_ACCESS_TOKEN"]
+}, async (event) => {
+    const beforeData = event.data.before.data();
+    const afterData = event.data.after.data();
+    if (!beforeData || !afterData) return;
+
+    const beforeLikes = beforeData.likes || [];
+    const afterLikes = afterData.likes || [];
+
+    // 如果点赞数没有增加，跳过
+    if (afterLikes.length <= beforeLikes.length) return;
+
+    // 找到新点赞的用户
+    const newLikerIds = afterLikes.filter(uid => !beforeLikes.includes(uid));
+    if (newLikerIds.length === 0) return;
+
+    // 只需要通知这个家务的发布者
+    const creatorId = afterData.completed_by;
+    // 如果是自己点赞自己，就不通知了
+    if (newLikerIds.includes(creatorId)) return;
+
+    // 因为我们这里没有关联 Users 集合来获取点赞者的名字，所以通用提示即可
+    const messageText = 
+`❤️ 【家务被点赞】
+
+您完成的家务 [${afterData.chore_title || '某项家务'}] 收到了家人的点赞！
+快去家庭广场看看吧~`;
+
+    try {
+        const response = await fetch("https://api.line.me/v2/bot/message/push", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+            },
+            body: JSON.stringify({
+                to: creatorId,
+                messages: [{ type: "text", text: messageText }]
+            })
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            logger.error(`LINE API Like 发送失败:`, errorText);
+        } else {
+            logger.info(`点赞通知已成功推送给家务创建者: ${creatorId}`);
+        }
+    } catch (error) {
+        logger.error("点赞推送网络错误:", error);
+    }
+});
+
+// 监听数据库路径：当有新评论创建时
+exports.sendCommentNotification = onDocumentCreated({
+    document: "families/{familyId}/records/{recordId}/comments/{commentId}",
+    secrets: ["LINE_CHANNEL_ACCESS_TOKEN"]
+}, async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) return;
+
+    const comment = snapshot.data();
+    const familyId = event.params.familyId;
+    const recordId = event.params.recordId;
+
+    try {
+        // 获取这条家务本身的信息
+        const recordDoc = await admin.firestore().collection('families').doc(familyId).collection('records').doc(recordId).get();
+        if (!recordDoc.exists) return;
+        const recordData = recordDoc.data();
+
+        // 仅通知发家务的人，且排除自己给自己评论
+        const creatorId = recordData.completed_by;
+        if (creatorId === comment.author_id) return;
+
+        const messageText = 
+`💬 【新评论通知】
+
+${comment.author_name || '家人'} 评论了您的家务 [${recordData.chore_title || '某项家务'}]:
+"${comment.content}"
+
+快去家庭广场回复吧~`;
+
+        const response = await fetch("https://api.line.me/v2/bot/message/push", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+            },
+            body: JSON.stringify({
+                to: creatorId,
+                messages: [{ type: "text", text: messageText }]
+            })
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            logger.error(`LINE API Comment 发送失败:`, errorText);
+        } else {
+            logger.info(`评论通知已成功推送给: ${creatorId}`);
+        }
+    } catch (error) {
+        logger.error("评论推送逻辑发生错误:", error);
     }
 });

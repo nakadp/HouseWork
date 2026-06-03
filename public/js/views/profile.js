@@ -1,4 +1,5 @@
-import { getUserProfile, shareFamilyInvite } from '../services/liff.js';
+import { getUserProfile, shareFamilyInvite } from '../services/liff.js?v=11';
+import { store } from '../store.js?v=11';
 
 // Gamification logic
 function getBadge(choresCount) {
@@ -15,9 +16,9 @@ export const ProfileView = {
     state: {
         profile: null,
         members: [
-            { id: '1', name: '爸爸', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=0ea5e9', role: 'admin' },
-            { id: '2', name: '妈妈', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=ef4444', role: 'member' },
-            { id: '3', name: '孩子', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=00ff66', role: 'member' }
+            { id: 'mock_user_1', name: '爸爸', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=0ea5e9', role: 'admin' },
+            { id: 'mock_user_2', name: '妈妈', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=ef4444', role: 'member' },
+            { id: 'mock_user_3', name: '孩子', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=00ff66', role: 'member' }
         ],
         isAdmin: true, // For mock
         currentFamilyId: 'family_abc123'
@@ -25,8 +26,16 @@ export const ProfileView = {
 
     async render() {
         this.state.profile = await getUserProfile();
-        // Mock chores count
-        const currentMonthChores = Math.floor(Math.random() * 30);
+        
+        // Dynamically calculate chores count
+        const records = store.getSharedMockRecords();
+        const now = new Date();
+        const currentMonthChores = records.filter(r => 
+            r.memberId === 'mock_user_1' && 
+            r.completed_at.getMonth() === now.getMonth() && 
+            r.completed_at.getFullYear() === now.getFullYear()
+        ).length;
+        
         const badge = getBadge(currentMonthChores);
         const roleText = this.state.isAdmin ? '管理员' : '成员';
 
@@ -168,7 +177,7 @@ export const ProfileView = {
     renderMembersList() {
         let html = '';
         this.state.members.forEach(member => {
-            const isMe = member.id === '1'; // Mock current user
+            const isMe = member.id === 'mock_user_1'; // Mock current user
             const badgeHtml = member.role === 'admin' 
                 ? '<span style="background: rgba(255,255,255,0.1); font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">管理员</span>' 
                 : '';

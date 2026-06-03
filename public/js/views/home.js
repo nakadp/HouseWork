@@ -1,4 +1,4 @@
-import { store } from '../store.js';
+import { store } from '../store.js?v=11';
 
 export const HomeView = {
     render() {
@@ -126,6 +126,7 @@ export const HomeView = {
                     const chore = store.todayChores.find(c => c.id === this.pendingUploadChoreId);
                     if (chore) {
                         chore.isCompleted = true;
+                        store.addSharedMockRecord(chore, 'mock_user_1', true);
                         this.renderChores();
                     }
                     this.pendingUploadChoreId = null;
@@ -196,6 +197,7 @@ export const HomeView = {
                     const chore = store.todayChores.find(c => c.id === id);
                     if (chore) {
                         chore.isCompleted = true;
+                        store.addSharedMockRecord(chore, 'mock_user_1', false);
                         this.renderChores();
                     }
                 }

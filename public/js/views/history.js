@@ -1,5 +1,5 @@
-import { getDb } from '../services/firebase.js';
-import { store } from '../store.js?v=7';
+import { getDb } from '../services/firebase.js?v=11';
+import { store } from '../store.js?v=11';
 
 let firestoreModule = null;
 
