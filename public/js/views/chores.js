@@ -1,4 +1,4 @@
-import { store } from '../store.js?v=11';
+import { store } from '../store.js?v=13';
 
 export const ChoresView = {
     get state() {

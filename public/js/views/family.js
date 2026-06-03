@@ -1,5 +1,5 @@
-import { getDb } from '../services/firebase.js?v=11';
-import { store } from '../store.js?v=11';
+import { getDb } from '../services/firebase.js?v=13';
+import { store } from '../store.js?v=13';
 
 let firestoreModule = null;
 let currentUserId = 'mock_user_1'; 
@@ -202,9 +202,35 @@ export const FamilyView = {
     },
 
     renderFeed() {
+        this.dom.feedContainer.innerHTML = '';
         let html = '';
+
+        // 1. Render Active Supplies (High priority pinned at top)
+        if (store.activeSupplies && store.activeSupplies.length > 0) {
+            store.activeSupplies.forEach(supply => {
+                html += `
+                    <div class="card pulse-glow" style="margin-bottom: 24px; padding: 20px; border: 2px solid #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); animation: pulseAlert 2s infinite;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                    ⚠️
+                                </div>
+                                <div>
+                                    <div style="color: #ef4444; font-weight: 700; font-size: 14px; text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);">耗材强提醒</div>
+                                    <div style="color: var(--text-secondary); font-size: 11px;">来自家人</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: white;">需要补充：${supply.name}</p>
+                        <button class="btn btn-primary btn-complete-supply" data-id="${supply.id}" style="width: 100%; background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">我已买好 ✓</button>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. Render normal feed records
         if (this.state.feed.length === 0) {
-            this.dom.feedContainer.innerHTML = `<div style="text-align: center; color: var(--text-secondary); margin-top: 40px;">暂无打卡动态，快去完成今天的第一项任务吧！</div>`;
+            this.dom.feedContainer.innerHTML += `<div style="text-align: center; color: var(--text-secondary); margin-top: 40px;">暂无打卡动态，快去完成今天的第一项任务吧！</div>`;
             return;
         }
 
@@ -258,6 +284,17 @@ export const FamilyView = {
     },
 
     bindFeedEvents() {
+        this.dom.feedContainer.querySelectorAll('.btn-complete-supply').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const supplyId = e.currentTarget.dataset.id;
+                if (confirm('确认已经买好了吗？这将计入您的家务实绩！')) {
+                    store.completeSupplyMemo(supplyId, currentUserId);
+                    this.state.feed = store.getSharedMockRecords(); // Refresh feed
+                    this.renderFeed();
+                }
+            });
+        });
+
         this.dom.feedContainer.querySelectorAll('.btn-like').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const btnEl = e.currentTarget;

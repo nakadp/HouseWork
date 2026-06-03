@@ -1,5 +1,5 @@
-import { getUserProfile, shareFamilyInvite } from '../services/liff.js?v=11';
-import { store } from '../store.js?v=11';
+import { getUserProfile, shareFamilyInvite } from '../services/liff.js?v=13';
+import { store } from '../store.js?v=13';
 
 // Gamification logic
 function getBadge(choresCount) {
@@ -80,7 +80,7 @@ export const ProfileView = {
                 <div style="margin-top: 24px;">
                     <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--text-secondary);">系统与数据</h3>
                     
-                    <div class="card" style="display: flex; align-items: center; padding: 16px; cursor: pointer; margin-bottom: 12px;">
+                    <div class="card" id="btn-photo-wall" style="display: flex; align-items: center; padding: 16px; cursor: pointer; margin-bottom: 12px; transition: background 0.2s;">
                         <span style="font-size: 20px; margin-right: 16px;">🖼️</span>
                         <div style="flex: 1;">
                             <h4 style="font-size: 16px; margin-bottom: 2px;">家务成果墙</h4>
@@ -89,7 +89,7 @@ export const ProfileView = {
                         <span style="color: var(--text-secondary);">➔</span>
                     </div>
                     
-                    <div class="card" style="display: flex; align-items: center; padding: 16px; cursor: pointer; margin-bottom: 12px;">
+                    <div class="card" id="btn-supplies-memo" style="display: flex; align-items: center; padding: 16px; cursor: pointer; margin-bottom: 12px; transition: background 0.2s;">
                         <span style="font-size: 20px; margin-right: 16px;">📋</span>
                         <div style="flex: 1;">
                             <h4 style="font-size: 16px; margin-bottom: 2px;">耗材备忘录</h4>
@@ -128,6 +128,35 @@ export const ProfileView = {
                         <!-- JS generated list -->
                     </div>
                 </div>
+
+                <!-- Supplies Memo Modal -->
+                <div id="supplies-modal" style="display: none; position: absolute; inset: -20px; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 2000; align-items: center; justify-content: center;">
+                    <div class="card" style="width: 90%; max-width: 400px; padding: 24px; border: 1px solid var(--accent-color); box-shadow: var(--accent-glow);">
+                        <h3 style="margin-bottom: 16px; font-size: 18px; font-weight: 700; color: var(--accent-color);">新建耗材备忘</h3>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">这将在家庭广场发出强提醒，直到某人买好。</p>
+                        <input type="text" id="supplies-input" placeholder="例如：洗衣液、洗洁精、垃圾袋..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: var(--radius-sm); font-size: 14px; outline: none; margin-bottom: 20px;">
+                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                            <button id="btn-cancel-supplies" style="background: transparent; border: none; color: var(--text-secondary); padding: 8px 16px; cursor: pointer;">取消</button>
+                            <button id="btn-submit-supplies" class="btn btn-primary" style="padding: 8px 20px;">发布强提醒</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photo Wall Drawer -->
+                <div id="photo-wall-drawer" style="display: none; position: absolute; inset: -20px; background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; padding: 40px 20px 20px 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="font-size: 20px; font-weight: 700; color: var(--text-primary);">家务成果墙</h2>
+                        <button id="btn-close-photo-wall" style="background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    <div id="photo-wall-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; overflow-y: auto; padding-bottom: 20px;">
+                        <!-- JS generated photos -->
+                    </div>
+                </div>
+
+                <!-- Lightbox for Photos -->
+                <div id="profile-lightbox" style="display: none; position: absolute; inset: -20px; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; cursor: zoom-out;">
+                    <img id="profile-lightbox-img" style="max-width: 95%; max-height: 90vh; border-radius: 8px; object-fit: contain; transition: transform 0.2s;">
+                </div>
             </div>
         `;
     },
@@ -144,10 +173,23 @@ export const ProfileView = {
             btnCloseMembers: container.querySelector('#btn-close-members'),
             membersDrawer: container.querySelector('#members-drawer'),
             membersList: container.querySelector('#members-list'),
-            memberCountText: container.querySelector('#member-count')
+            memberCountText: container.querySelector('#member-count'),
+            
+            btnPhotoWall: container.querySelector('#btn-photo-wall'),
+            photoWallDrawer: container.querySelector('#photo-wall-drawer'),
+            btnClosePhotoWall: container.querySelector('#btn-close-photo-wall'),
+            photoWallGrid: container.querySelector('#photo-wall-grid'),
+            lightbox: container.querySelector('#profile-lightbox'),
+            lightboxImg: container.querySelector('#profile-lightbox-img'),
+
+            btnSuppliesMemo: container.querySelector('#btn-supplies-memo'),
+            suppliesModal: container.querySelector('#supplies-modal'),
+            btnCancelSupplies: container.querySelector('#btn-cancel-supplies'),
+            btnSubmitSupplies: container.querySelector('#btn-submit-supplies'),
+            suppliesInput: container.querySelector('#supplies-input')
         };
 
-        // Invite Event
+        // ... existing events ...
         if (this.dom.btnInvite) {
             this.dom.btnInvite.addEventListener('click', async () => {
                 try {
@@ -158,7 +200,6 @@ export const ProfileView = {
             });
         }
 
-        // Open Members Drawer
         if (this.dom.btnMembers) {
             this.dom.btnMembers.addEventListener('click', () => {
                 this.renderMembersList();
@@ -166,12 +207,77 @@ export const ProfileView = {
             });
         }
 
-        // Close Drawer
         if (this.dom.btnCloseMembers) {
             this.dom.btnCloseMembers.addEventListener('click', () => {
                 this.dom.membersDrawer.style.display = 'none';
             });
         }
+
+        // --- Photo Wall Events ---
+        this.dom.btnPhotoWall.addEventListener('click', () => {
+            this.renderPhotoWall();
+            this.dom.photoWallDrawer.style.display = 'flex';
+        });
+
+        this.dom.btnClosePhotoWall.addEventListener('click', () => {
+            this.dom.photoWallDrawer.style.display = 'none';
+        });
+
+        this.dom.lightbox.addEventListener('click', () => {
+            this.dom.lightbox.style.display = 'none';
+        });
+
+        // --- Supplies Memo Events ---
+        this.dom.btnSuppliesMemo.addEventListener('click', () => {
+            this.dom.suppliesInput.value = '';
+            this.dom.suppliesModal.style.display = 'flex';
+        });
+
+        this.dom.btnCancelSupplies.addEventListener('click', () => {
+            this.dom.suppliesModal.style.display = 'none';
+        });
+
+        this.dom.btnSubmitSupplies.addEventListener('click', () => {
+            const val = this.dom.suppliesInput.value.trim();
+            if (!val) return alert("请输入耗材名称！");
+            
+            store.addSupplyMemo(val, 'mock_user_1');
+            alert(`已发布：${val}\n所有家庭成员的广场上已置顶强提醒！`);
+            this.dom.suppliesModal.style.display = 'none';
+        });
+    },
+
+    renderPhotoWall() {
+        const records = store.getSharedMockRecords().filter(r => r.photo_url);
+        
+        if (records.length === 0) {
+            this.dom.photoWallGrid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 40px 0;">暂无家务成果照片</div>`;
+            return;
+        }
+
+        let html = '';
+        records.forEach(r => {
+            html += `
+                <div class="photo-item" style="position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; cursor: zoom-in;">
+                    <img src="${r.photo_url}" data-src="${r.photo_url}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 12px 8px 8px 8px;">
+                        <div style="font-size: 11px; font-weight: bold; color: white;">${r.chore_title}</div>
+                        <div style="font-size: 10px; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                            <div class="neon-dot ${r.color}" style="width: 6px; height: 6px;"></div> ${r.completed_by_name}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        this.dom.photoWallGrid.innerHTML = html;
+
+        this.dom.photoWallGrid.querySelectorAll('.photo-item img').forEach(img => {
+            img.addEventListener('click', (e) => {
+                this.dom.lightboxImg.src = e.target.dataset.src;
+                this.dom.lightbox.style.display = 'flex';
+            });
+        });
     },
 
     renderMembersList() {

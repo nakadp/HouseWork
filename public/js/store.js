@@ -131,5 +131,35 @@ export const store = {
         // Add to top of the feed
         this._sharedMockRecords.unshift(newRecord);
         return newRecord;
+    },
+
+    // Supplies Memo State
+    activeSupplies: [],
+    
+    addSupplyMemo(itemName, creatorId = 'mock_user_1') {
+        const supply = {
+            id: `supply_${Date.now()}`,
+            name: itemName,
+            creatorId: creatorId,
+            created_at: new Date()
+        };
+        this.activeSupplies.unshift(supply);
+        return supply;
+    },
+
+    completeSupplyMemo(supplyId, completerId = 'mock_user_1') {
+        const index = this.activeSupplies.findIndex(s => s.id === supplyId);
+        if (index > -1) {
+            const supply = this.activeSupplies[index];
+            this.activeSupplies.splice(index, 1);
+            
+            // Treat as a completed chore
+            const mockChore = {
+                name: `[耗材补充] ${supply.name}`,
+                category: '系统'
+            };
+            return this.addSharedMockRecord(mockChore, completerId, false);
+        }
+        return null;
     }
 };
