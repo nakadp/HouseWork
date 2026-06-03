@@ -20,9 +20,9 @@ export const HistoryView = {
                     <div style="display: flex; gap: 8px;">
                         <select id="filter-member" style="padding: 6px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--surface-solid); color: var(--text-primary); font-size: 12px; outline: none;">
                             <option value="all">全家人</option>
-                            <option value="dad">爸爸</option>
-                            <option value="mom">妈妈</option>
-                            <option value="kid">孩子</option>
+                            <option value="mock_user_1">爸爸</option>
+                            <option value="mock_user_2">妈妈</option>
+                            <option value="mock_user_3">孩子</option>
                         </select>
                         <select id="filter-month" style="padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--accent-color); background: rgba(0,255,102,0.1); color: var(--accent-color); font-weight: 700; box-shadow: var(--accent-glow); outline: none;">
                             <option value="2026-6">2026年6月</option>
@@ -415,7 +415,7 @@ export const HistoryView = {
         if (!this.chartPerson || !this.chartType) return;
         const records = this.getFilteredRecords();
 
-        const weekData = { dad: [0,0,0,0], mom: [0,0,0,0], kid: [0,0,0,0] };
+        const weekData = { mock_user_1: [0,0,0,0], mock_user_2: [0,0,0,0], mock_user_3: [0,0,0,0] };
         records.forEach(r => {
             const day = r.completed_at.getDate();
             const week = Math.min(Math.floor((day - 1) / 7), 3);
@@ -426,17 +426,17 @@ export const HistoryView = {
             labels: ['第一周', '第二周', '第三周', '第四周'],
             datasets: [
                 {
-                    label: '爸爸', data: weekData.dad,
+                    label: '爸爸', data: weekData.mock_user_1,
                     borderColor: '#0ea5e9', borderWidth: 3, tension: 0.4,
                     pointBackgroundColor: '#fff', pointBorderWidth: 2, pointRadius: 4
                 },
                 {
-                    label: '妈妈', data: weekData.mom,
+                    label: '妈妈', data: weekData.mock_user_2,
                     borderColor: '#ef4444', borderWidth: 3, tension: 0.4,
                     pointBackgroundColor: '#fff', pointBorderWidth: 2, pointRadius: 4
                 },
                 {
-                    label: '孩子', data: weekData.kid,
+                    label: '孩子', data: weekData.mock_user_3,
                     borderColor: '#00ff66', borderWidth: 3, tension: 0.4,
                     pointBackgroundColor: '#fff', pointBorderWidth: 2, pointRadius: 4
                 }

@@ -95,7 +95,12 @@ export const FamilyView = {
             btnSendComment: container.querySelector('#btn-send-comment')
         };
 
-        // Handle sending comments in Drawer
+        // Use event delegation for closing drawer to avoid lost listeners
+        this.dom.commentDrawer.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-close-comments')) {
+                this.closeCommentDrawer();
+            }
+        });
         this.dom.btnSendComment.addEventListener('click', () => {
             const val = this.dom.commentInput.value.trim();
             if (!val) return;
