@@ -40,5 +40,59 @@ export const store = {
             if (found) return { ...found, category: cat };
         }
         return null;
+    },
+    
+    // Unified Mock Data generator for Family and History views
+    _sharedMockRecords: null,
+    getSharedMockRecords() {
+        if (this._sharedMockRecords) return this._sharedMockRecords;
+        
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const data = [];
+        
+        const members = [
+            { id: 'mock_user_1', name: '爸爸', color: 'blue', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=0ea5e9' },
+            { id: 'mock_user_2', name: '妈妈', color: 'red', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=ef4444' },
+            { id: 'mock_user_3', name: '孩子', color: 'green', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=00ff66' }
+        ];
+        const choreTypes = ['洗碗', '扫拖地', '洗衣', '清理油烟机', '整理床铺'];
+        
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let recordIdCounter = 1;
+        
+        for (let i = 1; i <= daysInMonth; i++) {
+            if (Math.random() > 0.3) {
+                let numChores = Math.floor(Math.random() * 3) + 1;
+                for (let j = 0; j < numChores; j++) {
+                    const member = members[Math.floor(Math.random() * members.length)];
+                    const hasPhoto = Math.random() > 0.7;
+                    const date = new Date(year, month, i, 12 + j, Math.floor(Math.random() * 60), 0);
+                    
+                    data.push({
+                        id: `mock_rec_${recordIdCounter++}`,
+                        completed_at: date,
+                        memberId: member.id, // For history.js filtering
+                        completed_by: member.id, // For family.js
+                        memberName: member.name, // History
+                        completed_by_name: member.name, // Family
+                        color: member.color,
+                        avatar: member.avatar,
+                        completed_by_avatar: member.avatar,
+                        choreName: choreTypes[Math.floor(Math.random() * choreTypes.length)],
+                        chore_title: choreTypes[Math.floor(Math.random() * choreTypes.length)],
+                        photo_url: hasPhoto ? 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=400&q=80' : null,
+                        likes: Math.random() > 0.5 ? ['mock_user_2'] : [],
+                        comments_count: Math.floor(Math.random() * 3)
+                    });
+                }
+            }
+        }
+        
+        // Sort newest first
+        data.sort((a, b) => b.completed_at - a.completed_at);
+        this._sharedMockRecords = data;
+        return data;
     }
 };

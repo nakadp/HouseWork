@@ -19,16 +19,19 @@ export async function initFirebase() {
         storage = getStorage(app);
         auth = getAuth(app);
         
-        // Sign in anonymously for easy dev setup (later can use custom token with Line login if backend is added, 
-        // but for now anonymous auth + Line ID stored in db is the simplest)
-        await signInAnonymously(auth);
+        // Sign in anonymously for easy dev setup
+        try {
+            await signInAnonymously(auth);
+        } catch (authError) {
+            console.warn("Firebase Anonymous Auth failed, continuing without auth:", authError);
+        }
         
         console.log("Firebase initialized (Modular SDK v10)");
         return { app, db, storage, auth };
     } catch (e) {
         console.error("Firebase init error (if running locally without emulator/hosting, this will fail):", e);
-        // Fallback or mock could be implemented here for local file:// testing
-        throw e;
+        // Do not throw so app can mount views using Mock
+        return null;
     }
 }
 

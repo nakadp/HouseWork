@@ -1,12 +1,12 @@
-import { initLIFF } from './services/liff.js?v=4';
-import { initFirebase } from './services/firebase.js?v=4';
+import { initLIFF } from './services/liff.js?v=7';
+import { initFirebase } from './services/firebase.js?v=7';
 
 // Import Views
-import { HomeView } from './views/home.js?v=4';
-import { FamilyView } from './views/family.js?v=4';
-import { ChoresView } from './views/chores.js?v=4';
-import { HistoryView } from './views/history.js?v=4';
-import { ProfileView } from './views/profile.js?v=4';
+import { HomeView } from './views/home.js?v=7';
+import { FamilyView } from './views/family.js?v=7';
+import { ChoresView } from './views/chores.js?v=7';
+import { HistoryView } from './views/history.js?v=7';
+import { ProfileView } from './views/profile.js?v=7';
 
 class App {
     constructor() {

@@ -523,3 +523,101 @@ Plaintext
    - 在系统设置下方，以相同的毛玻璃列表样式追加“🖼️ 家务成果墙”与“📋 耗材备忘录”的轻量级视图切换逻辑，确保整个页面功能闭环。
 
 请立即为我编写完整的 profile.js 业务组件代码！
+
+
+
+
+
+
+为了让 AI Agent 能够彻底把这个“内部 SNS 社交与核心协作流”完美落地，我们需要将图片前端压缩、实时动态流、无锁点赞机制以及评论抽屉的底层逻辑彻底详细化。
+👥 「家庭广场与社交协作流」深度详细化开发规约
+一、 协作交互流 1：家务执行与多媒体发布 (Frontend Pipeline)
+
+当用户在首页点击“完成”，整个图文动态的生成遵循以下流水线：
+
+[手机拍照/选图] ➡️ [Canvas 比例压缩] ➡️ [上传至 Firebase Storage] ➡️ [写入 Firestore 触发云函数]
+
+1. 极简原生的前端图片压缩 (Vanilla JS Canvas Compression)
+
+为了死守 5GB 免费空间，用户利用手机摄像头拍完照后，前端在 home.js 中使用原生 Canvas 对图片进行等比例抽样压缩：
+
+    压缩逻辑：限制图片最大宽度或高度不超过 1024px，调用 canvas.toDataURL("image/jpeg", 0.7) 将质量压到 70%。
+
+    预期效果：原图 4MB 瞬间下降到 100KB ~ 150KB，用户肉眼几乎看不出区别，但空间节省 40 倍。
+
+2. Firestore 数据写入格式
+
+压缩后的 Blob 文件上传到 Firebase Storage 后获取到 photo_url。前端紧接着向 families/{familyId}/records 写入单条打卡文档，必须包含用于渲染社交广场的社交字段：
+JavaScript
+
+{
+    "chore_title": "清理油烟机",
+    "area": "厨房",
+    "completed_by": "user_line_id_123",      // 谁做的
+    "completed_by_name": "爸爸 (张三)",       // 冗余字段，方便秒开渲染
+    "completed_by_avatar": "https://...",   // LINE 头像 URL
+    "completed_at": serverTimestamp(),      // 服务器时间戳，用于排序
+    "photo_url": "https://firebasestorage...", 
+    "likes": [],                             // 存储点赞者的 LINE UID 数组
+    "comments_count": 0                      // 评论计数器
+}
+
+二、 协作交互流 2：家庭广场社交引擎 (SNS Mechanics)
+1. 实时动态流监听 (The Feed Stream)
+
+family.js 视图激活时，前端直接建立对当前家庭家务记录的限额实时监听：
+
+    查询条件：query(collection(db, "families/ID/records"), orderBy("completed_at", "desc"), limit(20))。
+
+    交互体验：只要有家人在厨房打卡上传了照片，正在刷广场的成员屏幕上不需要下拉刷新，卡片会伴随平滑的向下滑动（Slide Down）特效瞬间出现在顶端。
+
+2. 原子化无锁点赞系统 (Like System)
+
+Mock 中的「👍 点赞 (2)」不能做成简单的加减法，否则多人同时点赞会导致数据冲突。
+
+    底层逻辑：
+
+        当用户点击点赞按钮时，前端判断自己的 LINE UID 是否在卡片的 likes 数组中。
+
+        如果不在，调用 Firestore 的 arrayUnion(currentUser.userId)；如果在，调用 arrayRemove(currentUser.userId)。
+
+    视觉呈现：如果 likes 数组包含当前用户的 UID，大拇指图标和数字直接变亮高亮为荧光绿，并触发一个微小的放大 Q 弹动画（Scale 1.2 -> 1.0）。
+
+3. 评论生态：毛玻璃半屏抽屉 (Comment Drawer)
+
+点击「💬 评论」时，页面下方优雅地滑出一个高度为 70% 的半透明毛玻璃抽屉（Drawer）。
+
+    数据解耦：每一条家务动态的评论，存放在该条记录的子集合中：families/{familyId}/records/{recordId}/comments。
+
+    实时同步：打开抽屉时，单独对这个子集合进行 onSnapshot 监听。在抽屉底部提供一个输入框，点击发送直接 addDoc 到子集合。关闭抽屉时自动断开监听（unsubscribe），极致节省手机电量与读取额度。
+
+4. 科技感在线状态胶囊 (Presence Engine)
+
+右上角发光的「在线: 2人」标签，采用轻量级心跳机制：
+
+    实现方案：在 families/{familyId} 文档下维持一个 active_members 的 Map 结构。用户切换到任意 Tab 或打开应用时，向其写入自己的 UID 和当前服务器时间戳。
+
+    人数计算：前端在监听家庭文档时，全量扫描这个 Map，只计算时间戳在过去 5 分钟以内的成员数量。这样既能达成实时互动的科技感，又完全免去了引入复杂第三方 Websocket 的成本。
+
+🤖 给 AI Agent 的精细化开发指令
+
+请将以下指令复制给您的 Agent，让它把上面这一整套惊艳的社交协作流变成实打实的代码：
+Plaintext
+
+基础 UI 重构非常震撼！现在请为【家庭广场】模块（family.js）注入满血的内部 SNS 社交与协作逻辑：
+
+1. 【实时动态流（Feed Stream）】：
+   - 使用 Firestore v10+ 的 onSnapshot 实时监听 `families/{familyId}/records` 集合，按 `completed_at` 倒序排列，限制拉取最新 20 条。确保全家多端数据秒级同步渲染。
+   - 优化图片渲染：如果 photo_url 存在，将其优雅地渲染在网格占位框中；若不存在，隐藏该图片容器。
+
+2. 【高并发点赞与评论抽屉】：
+   - 实现👍点赞功能：采用 Firestore 的 arrayUnion 和 arrayRemove 针对记录内的 `likes` 数组进行原子化操作。若当前用户已点赞，UI 上的点赞图标与数量高亮切换为荧光绿。
+   - 实现💬评论功能：点击评论按钮，下方滑出一个高度为 70% 的半屏毛玻璃抽屉（backdrop-filter: blur(20px)）。在抽屉内实时监听当前记录的子集合 `records/{recordId}/comments`，并支持在抽屉底部发送新评论。
+
+3. 【在线人数胶囊与前端压缩】：
+   - 读取家庭文档中的成员活跃时间戳字典，动态计算过去 5 分钟内的活跃人数，更新至右上角“在线: X人”标签。
+   - 在前端家务打卡成功准备上传前，利用 HTML5 Canvas 机制对图片进行等比例高压缩（最大宽高 1024px，质量 0.7），然后再通过 Firebase Storage 模块上传，彻底卡死 5GB 空间的消耗。
+
+请立刻为我生成满血版 family.js 的全套业务逻辑代码！
+
+现在您的整个项目从前端高档毛玻璃皮肤，到后端的云函数全自动通知、Storage 存储、Firestore 缓存监听、再到这里的 SNS 互动社交，所有的技术链路和细节已经全部闭环、无缝对齐。

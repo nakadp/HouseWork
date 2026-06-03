@@ -1,38 +1,7 @@
 import { getDb } from '../services/firebase.js';
+import { store } from '../store.js?v=7';
 
 let firestoreModule = null;
-
-// Mock Data Generator for Fallback
-function generateMockData(year, month) {
-    const data = [];
-    const members = [
-        { id: 'dad', name: '爸爸', color: 'blue', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=0ea5e9' },
-        { id: 'mom', name: '妈妈', color: 'red', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=ef4444' },
-        { id: 'kid', name: '孩子', color: 'green', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=00ff66' }
-    ];
-    const choreTypes = ['洗碗', '扫地', '洗衣', '擦桌子', '倒垃圾'];
-
-    const daysInMonth = new Date(year, month, 0).getDate();
-    for (let i = 1; i <= daysInMonth; i++) {
-        if (Math.random() > 0.4) {
-            let numChores = Math.floor(Math.random() * 3) + 1;
-            for (let j = 0; j < numChores; j++) {
-                const member = members[Math.floor(Math.random() * members.length)];
-                const hasPhoto = Math.random() > 0.7;
-                data.push({
-                    completed_at: new Date(year, month - 1, i, 12 + j, 0, 0),
-                    memberId: member.id,
-                    memberName: member.name,
-                    color: member.color,
-                    avatar: member.avatar,
-                    choreName: choreTypes[Math.floor(Math.random() * choreTypes.length)],
-                    photo_url: hasPhoto ? 'https://images.unsplash.com/photo-1527515637-640a3f8fa315?auto=format&fit=crop&w=400&q=80' : null
-                });
-            }
-        }
-    }
-    return data;
-}
 
 export const HistoryView = {
     state: {
@@ -242,7 +211,12 @@ export const HistoryView = {
     },
 
     fallbackToMock() {
-        this.state.records = generateMockData(this.state.currentYear, this.state.currentMonth);
+        const allMocks = store.getSharedMockRecords();
+        // Filter by currently selected year and month
+        this.state.records = allMocks.filter(r => {
+            return r.completed_at.getFullYear() === this.state.currentYear && 
+                   r.completed_at.getMonth() === (this.state.currentMonth - 1);
+        });
         this.refreshUI();
     },
 
