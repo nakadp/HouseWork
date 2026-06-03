@@ -393,3 +393,133 @@ onSnapshot(monthlyQuery, (snapshot) => {
 
 请立即为我编写完整的 history.js 业务组件逻辑代码！
 
+
+
+
+
+
+
+
+
+
+为了让 AI Agent 能够把这些精美的空壳按钮赋予真正的生命，我们需要把个人信息、LINE 邀请机制、家庭权限控制以及备忘录的底层逻辑彻底具象化。这是一份为您量身定制的 「个人中心与家庭设置」模块详细开发规约。
+👤 「个人中心与家庭设置」模块深度详细化开发规约
+一、 顶部个人信息卡片与趣味称号系统
+1. 动态数据绑定
+
+    头像与昵称：页面加载时，通过 liff.getProfile() 异步获取真实的 LINE 头像和昵称，直接替换 Mock 中的 "US" 和 "测试用户"。
+
+    身份标签：系统查询当前家庭文档 families/{familyId}。若 created_by == currentUser.userId，则下方小字显示 [家庭名称] (管理员)；否则显示 [家庭名称] (成员)。
+
+2. 趣味家务称号计算逻辑 (Gamification)
+
+称号不是写死的，而是前端在读取 Firestore 本月打卡总次数（基于上一步在本地内存中缓存的 window.currentMonthRecords 或进行一次轻量级的全量 Count 查询）后，动态计算出来的：
+本月累计完成家务次数	动态展示的称号 (Badge)	勋章视觉样式
+0 ~ 5 次	🧹 萌新管家	灰色半透明胶囊标签
+6 ~ 20 次	👑 家务小能手	如图所示的金色发光标签
+21 次以上	🏆 终极家务战神	荧光绿霓虹发光标签
+二、 家庭管理核心：LINE 免后端邀请与加入流 (Core Workflow)
+
+这是整个 Mini App 实现多端协同最硬核、最巧妙的逻辑，完全不需要编写后端代码，全靠 LIFF 原生能力与 Firestore 联动。
+
+[管理员点击邀请] ➡️ [触发 shareTargetPicker] ➡️ [好友在 LINE 收到精美卡片]
+                                                                ⬇️
+[管理员更新组别] ⬅️ [自动绑定 familyId 并加入] ⬅️ [好友点击卡片授权登录]
+
+1. 「邀请家庭成员」按钮点击逻辑
+
+点击该按钮时，前端调用 LINE LIFF SDK 的 liff.shareTargetPicker API，直接在 LINE 内部唤起好友或群聊选择面板。
+
+    发送的卡片消息结构（Flex Message）：
+    不发送生硬的纯文本链接，而是发送一个 LINE 原生的高级 Flex 消息卡片，包含标题“🏠 邀请你加入我的家务极客组”、精美的小程序图标以及一个亮眼的“点击加入”按钮。
+
+    携带的强绑定链接：
+    按钮跳转的链接是带参数的 LIFF 线上 URL：
+    https://liff.line.me/2010266669-Efem8Y7p?action=join&familyId=${currentFamilyId}&inviter=${encodeURIComponent(userProfile.displayName)}
+
+2. 被邀请人点击链接后的「自动加入流」
+
+在单页应用的主入口 app.js 初始化时（liff.init() 完成后），加入全局路由拦截器：
+JavaScript
+
+// 伪代码：主路由拦截器
+const urlParams = new URLSearchParams(window.location.search);
+const action = urlParams.get('action');
+const inviteFamilyId = urlParams.get('familyId');
+const inviterName = urlParams.get('inviter');
+
+if (action === 'join' && inviteFamilyId) {
+    // 1. 弹出精美的毛玻璃确认弹窗 (Modal)
+    showJoinModal(`收到来自 ${decodeURIComponent(inviterName)} 的家庭邀请，是否加入该家庭并同步家务数据？`, async () => {
+        const currentUser = await liff.getProfile();
+        
+        // 2. 将当前用户的 LINE UID 和基本信息，追加到该家庭的成员列表中
+        const familyRef = doc(db, "families", inviteFamilyId);
+        await updateDoc(familyRef, {
+            members: arrayUnion(currentUser.userId),
+            // 可选：顺便把成员的头像昵称字典更新进去，方便渲染列表
+            [`memberProfiles.${currentUser.userId}`]: {
+                displayName: currentUser.displayName,
+                pictureUrl: currentUser.pictureUrl,
+                joinedAt: new Date()
+            }
+        });
+        
+        // 3. 更新当前用户的本地所属家庭ID配置，强行刷新页面进入主页
+        localStorage.setItem('user_family_id', inviteFamilyId);
+        window.location.href = "https://liff.line.me/2010266669-Efem8Y7p"; 
+    });
+}
+
+3. 「成员列表」弹窗与管理权限
+
+点击进入后滑出一个毛玻璃半透明半屏抽屉（Drawer），实时监听并渲染当前家庭的所有成员：
+
+    普通成员视角：仅展示成员头像、昵称、加入时间。
+
+    管理员视角（当前用户为创建者）：每个成员右侧额外渲染一个红色的「移除」按钮。点击后，前端从 Firestore 的 members 数组中 arrayRemove 该用户的 LINE UID，实现一键踢人。
+
+三、 系统设置与拓展板块规划
+1. 提醒设置 (Reminder Settings)
+
+    交互：点击后弹出时间选择器（Time Picker）。
+
+    极简逻辑：由于没有独立服务器跑定时任务，我们把用户设置的提醒时间（如 21:00）保存在 localStorage 中。当用户白天打开应用且发现当前时间已过设定值、但今天还没做家务时，前端直接弹窗做“本地强提醒”。
+
+2. 深色模式开关 (Mock 保留)
+
+    交互：既然我们已经确定全盘采用高级暗黑风，这个开关可以做成“更换荧光主题色”的彩蛋开关。
+
+    逻辑：开启时核心高亮为荧光绿（#00ff66），关闭时切换为极客蓝（#00f0ff）。只需动态切换 body 的 CSS 变量即可，给用户极高玩的交互体验。
+
+3. 隐藏功能补全：家务成果墙 & 耗材备忘录
+
+为了在不破坏现有精简布局的前提下加入产品设计书里的这两个刚需功能，我们直接在列表最下方以平滑图标条（List Item）的形式追加两个入口：
+
+    🖼️ 家务成果墙 (Gallery)：
+    点击后切换为一个精美的瀑布流画廊。前端使用 query(collection(db, ...), where("photo_url", "!=", "")) 筛选出当前家庭所有带照片的历史打卡记录，集中展示家里的干净瞬间。
+
+    📋 耗材与备忘录 (Memos)：
+    点击进入一个轻量级记事本。数据存放在 Firestore 的 families/{familyId}/memos 集合中。家庭成员可以自由在此写下：“扫地机拖布该买新的了” 或 “净水器滤芯2026年12月到期”，全家实时同步。
+
+🤖 给 AI Agent 的精细化开发指令
+
+请将以下指令丢给您的 Agent，它将为您补齐完整的业务功能代码：
+Plaintext
+
+请针对【个人中心与家庭设置】模块（profile.js）进行满血功能实现。请基于当前的暗黑毛玻璃 UI，完成以下核心逻辑注入：
+
+1. 【LINE 身份读取与称号计算】：
+   - 初始化时通过 liff.getProfile 渲染真实用户的头像与昵称。
+   - 统计本地缓存的本月打卡记录总数，动态计算家务称号（0-5: 萌新管家，6-20: 家务小能手，21+: 终极家务战神），并赋给标签不同的发光特效。
+
+2. 【核心功能：LINE 裂变邀请机制】：
+   - 实现“邀请家庭成员”按钮功能：点击后唤起 liff.shareTargetPicker，向选中的 LINE 好友/群组发送精心设计的 Flex Message 卡片。
+   - 卡片内的核心跳转 URL 必须携带参数：?action=join&familyId=${currentFamilyId}&inviter=${encodeURIComponent(userName)}。
+   - 确保在主路由（app.js）中拦截该参数，一旦检测到 action=join，弹出毛玻璃 Modal 提示加入，确认后将新成员的 LINE UID 写入 Firestore 的 families/{familyId}/members 数组中，实现免后端的无缝家庭组绑定。
+
+3. 【成员管理与拓展备忘录】：
+   - 实现“成员列表”抽屉：读取当前家庭的所有成员信息。若当前用户是该家庭的创建者（管理员），渲染“移除成员”按钮，点击后从 Firestore 中剔除该用户。
+   - 在系统设置下方，以相同的毛玻璃列表样式追加“🖼️ 家务成果墙”与“📋 耗材备忘录”的轻量级视图切换逻辑，确保整个页面功能闭环。
+
+请立即为我编写完整的 profile.js 业务组件代码！
